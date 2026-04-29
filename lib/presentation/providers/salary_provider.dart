@@ -10,22 +10,30 @@ final salaryRepositoryProvider = Provider<SalaryRepository>((ref) {
 class SalaryDiagnosisState {
   final bool isLoading;
   final double? percentile;
+  final List<double>? growthCurve;
+  final double? leverageScore;
   final String? errorMessage;
 
   SalaryDiagnosisState({
     this.isLoading = false,
     this.percentile,
+    this.growthCurve,
+    this.leverageScore,
     this.errorMessage,
   });
 
   SalaryDiagnosisState copyWith({
     bool? isLoading,
     double? percentile,
+    List<double>? growthCurve,
+    double? leverageScore,
     String? errorMessage,
   }) {
     return SalaryDiagnosisState(
       isLoading: isLoading ?? this.isLoading,
       percentile: percentile ?? this.percentile,
+      growthCurve: growthCurve ?? this.growthCurve,
+      leverageScore: leverageScore ?? this.leverageScore,
       errorMessage: errorMessage ?? this.errorMessage,
     );
   }
@@ -52,7 +60,20 @@ class SalaryDiagnosisNotifier extends StateNotifier<SalaryDiagnosisState> {
         experienceYears: experienceYears,
         currentSalary: currentSalary,
       );
-      state = state.copyWith(isLoading: false, percentile: percentile);
+      
+      final curve = await _repository.getExperienceGrowthCurve();
+      
+      // Calculate Leverage Score (e.g. higher percentile = higher leverage)
+      // Base score is just the percentile. We add a little bump for experience.
+      double leverage = percentile + (experienceYears * 0.5);
+      leverage = leverage.clamp(1.0, 100.0);
+
+      state = state.copyWith(
+        isLoading: false,
+        percentile: percentile,
+        growthCurve: curve,
+        leverageScore: leverage,
+      );
     } catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.toString());
     }
