@@ -2,143 +2,136 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
 import '../providers/salary_provider.dart';
-import '../widgets/glass_card.dart';
 import '../widgets/gauge_chart.dart';
-import 'analytics_dashboard_view.dart';
+import '../widgets/glass_card.dart';
 
-class DiagnosticView extends ConsumerStatefulWidget {
+class DiagnosticView extends ConsumerWidget {
   const DiagnosticView({super.key});
 
   @override
-  ConsumerState<DiagnosticView> createState() => _DiagnosticViewState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(salaryDiagnosisProvider);
 
-class _DiagnosticViewState extends ConsumerState<DiagnosticView> {
-  final _salaryController = TextEditingController();
-  final _experienceController = TextEditingController();
+    if (state.isLoading) {
+      return Scaffold(
+        backgroundColor: Colors.grey.shade50,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const [
+              CircularProgressIndicator(color: AppTheme.primaryBlue),
+              SizedBox(height: 24),
+              Text('340만 건의 공공데이터를 비교 분석 중입니다...', style: TextStyle(color: AppTheme.primaryBlue, fontSize: 16)),
+            ],
+          ),
+        ),
+      );
+    }
 
-  @override
-  void dispose() {
-    _salaryController.dispose();
-    _experienceController.dispose();
-    super.dispose();
-  }
-
-  void _onDiagnosePressed() {
-    FocusScope.of(context).unfocus();
-    final salary = double.tryParse(_salaryController.text) ?? 0.0;
-    final exp = int.tryParse(_experienceController.text) ?? 0;
-
-    ref.read(salaryDiagnosisProvider.notifier).diagnoseSalary(
-      industry: 'IT',
-      occupation: 'Developer',
-      experienceYears: exp,
-      currentSalary: salary,
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final diagnosisState = ref.watch(salaryDiagnosisProvider);
+    final percentile = state.percentile ?? 50.0;
+    
+    // Tier Badge logic
+    String tier = '브론즈';
+    Color tierColor = Colors.brown.shade600;
+    if (percentile > 90) {
+      tier = '다이아몬드';
+      tierColor = Colors.cyan.shade700;
+    } else if (percentile > 70) {
+      tier = '플래티넘';
+      tierColor = Colors.teal.shade700;
+    } else if (percentile > 50) {
+      tier = '골드';
+      tierColor = Colors.amber.shade700;
+    } else if (percentile > 30) {
+      tier = '실버';
+      tierColor = Colors.grey.shade600;
+    }
 
     return Scaffold(
-      backgroundColor: AppTheme.softBlue,
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        title: const Text('연봉 진단', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('나의 연봉 리포트', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        automaticallyImplyLeading: false, // Hide back button as it's in a tab
       ),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24.0),
+        child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 500),
-            child: GlassCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    '당신의 연봉 위치는?',
-                    style: Theme.of(context).textTheme.titleLarge,
-                    textAlign: TextAlign.center,
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Gamification: Tier Badge
+                Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: tierColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(30),
+                      border: Border.all(color: tierColor.withOpacity(0.5), width: 2),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.military_tech, color: tierColor, size: 28),
+                        const SizedBox(width: 8),
+                        Text('$tier 직장인', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: tierColor)),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 40),
-                  if (diagnosisState.percentile != null) ...[
-                    GaugeChart(
-                      percentile: diagnosisState.percentile!,
-                      activeColor: AppTheme.primaryBlue,
-                      inactiveColor: Colors.white,
-                    ),
-                    const SizedBox(height: 40),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const AnalyticsDashboardView(),
-                          ),
-                        );
-                      },
-                      child: const Text('상세 분석 대시보드 보기'),
-                    ),
-                    const SizedBox(height: 16),
-                    TextButton(
-                      onPressed: () {
-                        // Reset diagnosis
-                        ref.read(salaryDiagnosisProvider.notifier).reset();
-                      },
-                      child: const Text('다시 진단하기', style: TextStyle(fontSize: 16)),
-                    )
-                  ] else ...[
-                    TextField(
-                      controller: _salaryController,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        labelText: '현재 연봉 (만원)',
-                        filled: true,
-                        fillColor: Colors.white.withOpacity(0.7),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide.none,
+                ),
+                const SizedBox(height: 32),
+                
+                GlassCard(
+                  child: Column(
+                    children: [
+                      Text('대한민국 직장인 중 나의 위치는?', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: AppTheme.primaryBlue)),
+                      const SizedBox(height: 32),
+                      GaugeChart(
+                        percentile: percentile,
+                        activeColor: AppTheme.primaryBlue,
+                        inactiveColor: AppTheme.softBlue,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+                
+                // Real value converter (Mock data for visualization impact)
+                Row(
+                  children: [
+                    Expanded(
+                      child: GlassCard(
+                        child: Column(
+                          children: [
+                            const Text('내 시간의 가치', style: TextStyle(color: Colors.grey)),
+                            const SizedBox(height: 8),
+                            const Text('시급 2.6만원', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.primaryBlue)),
+                            const SizedBox(height: 8),
+                            Text('분급 433원', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                          ],
                         ),
-                        prefixIcon: const Icon(Icons.monetization_on, color: AppTheme.primaryBlue),
                       ),
                     ),
-                    const SizedBox(height: 24),
-                    TextField(
-                      controller: _experienceController,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        labelText: '경력 (년차)',
-                        filled: true,
-                        fillColor: Colors.white.withOpacity(0.7),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide.none,
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: GlassCard(
+                        child: Column(
+                          children: [
+                            const Text('1년 치를 모으면?', style: TextStyle(color: Colors.grey)),
+                            const SizedBox(height: 8),
+                            const Text('소나타 1.5대', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.primaryBlue)),
+                            const SizedBox(height: 8),
+                            Text('또는 오마카세 500번', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                          ],
                         ),
-                        prefixIcon: const Icon(Icons.work_history, color: AppTheme.primaryBlue),
                       ),
                     ),
-                    const SizedBox(height: 40),
-                    ElevatedButton(
-                      onPressed: diagnosisState.isLoading ? null : _onDiagnosePressed,
-                      child: diagnosisState.isLoading
-                          ? const SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                            )
-                          : const Text('진단하기'),
-                    ),
                   ],
-                  if (diagnosisState.errorMessage != null) ...[
-                    const SizedBox(height: 24),
-                    Text(
-                      '오류: ${diagnosisState.errorMessage}',
-                      style: const TextStyle(color: Colors.red),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
