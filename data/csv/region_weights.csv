@@ -1,0 +1,17 @@
+region,weight
+Seoul,1.2
+Busan,1.1
+Incheon,1.1
+Daegu,1.0
+Daejeon,1.0
+Gwangju,1.0
+Ulsan,1.0
+Gyeonggi-do,1.2
+Gangwon-do,0.9
+Chungcheongbuk-do,0.9
+Chungcheongnam-do,0.9
+Jeollabuk-do,0.9
+Jeollanam-do,0.9
+Gyeongsangbuk-do,0.9
+Gyeongsangnam-do,0.9
+Jeju-do,1.0

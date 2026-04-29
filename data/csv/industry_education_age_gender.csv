@@ -1,0 +1,17 @@
+industry,education,age,gender,salary_percentile
+Technology,Bachelor's,20-29,Male,75
+Technology,Bachelor's,20-29,Female,70
+Technology,Master's,30-39,Male,80
+Technology,Master's,30-39,Female,75
+Finance,Bachelor's,20-29,Male,65
+Finance,Bachelor's,20-29,Female,60
+Finance,Master's,30-39,Male,85
+Finance,Master's,30-39,Female,80
+Healthcare,Bachelor's,20-29,Male,70
+Healthcare,Bachelor's,20-29,Female,65
+Healthcare,Master's,30-39,Male,78
+Healthcare,Master's,30-39,Female,73
+Education,Bachelor's,20-29,Male,55
+Education,Bachelor's,20-29,Female,50
+Education,Master's,30-39,Male,68
+Education,Master's,30-39,Female,63
